@@ -1,9 +1,9 @@
 // src/index.ts
+import path from "path";
 import "dotenv/config";
-
 import express, { Application, Request, Response } from "express";
 import bodyParser from "body-parser";
-
+import adminUserRoutes from "./routes/admin.user.route";
 import authRoutes from "./routes/auth.route";
 import { connectDatabase } from "./database/mongodb";
 import { PORT } from "./config";
@@ -25,15 +25,18 @@ app.get("/", (req: Request, res: Response) => {
   });
 });
 
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/api/admin", adminUserRoutes);
+
 async function startServer() {
   try {
     await connectDatabase();
 
     app.listen(PORT, () => {
-      console.log(`Server running: http://localhost:${PORT}`);
+      console.log(`✅ Server running: http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("Failed to start server:", error);
+    console.error("❌ Failed to start server:", error);
     process.exit(1);
   }
 }

@@ -67,4 +67,31 @@ export class AuthController {
       });
     }
   }
+
+  async updateProfile(req: Request, res: Response) {
+  try {
+    const requester = (req as any).user;
+
+    const update: any = { ...req.body };
+
+    if ((req as any).file?.filename) {
+      update.image = `/uploads/users/${(req as any).file.filename}`;
+    }
+
+    const updated = await userService.updateProfile(requester, req.params.id, update);
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile updated",
+      data: updated,
+    });
+  } catch (error: any) {
+    return res.status(error.statusCode ?? 500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+    });
+  }
+}
+
+
 }

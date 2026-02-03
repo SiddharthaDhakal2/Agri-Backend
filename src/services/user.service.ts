@@ -14,7 +14,7 @@ export class UserService {
       throw new HttpError(409, "Email already in use");
     }
 
-    const usernameCheck = await userRepository.getUserByUsername(data.username);
+    const usernameCheck = await userRepository.getUserByName(data.name);
     if (usernameCheck) {
       throw new HttpError(409, "Username already in use");
     }
@@ -44,7 +44,7 @@ export class UserService {
     const payload = {
       id: user._id,
       email: user.email,
-      username: user.username,
+      name: user.name,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
@@ -59,4 +59,29 @@ export class UserService {
 
     return { token, user: userObj };
   }
+
+  async updateProfile(requester: any, id: string, updateData: any) {
+  // user can only update self unless admin
+  const isAdmin = requester?.role === "admin";
+  const isSelf = requester?.id === id;
+
+  if (!isAdmin && !isSelf) throw new HttpError(403, "Forbidden");
+
+  // Don’t allow role change from this endpoint unless admin
+  if (!isAdmin) delete updateData.role;
+
+  // If password present, hash it
+  if (updateData.password) {
+    updateData.password = await bcryptjs.hash(updateData.password, BCRYPT_SALT_ROUNDS);
+  }
+
+  const updated = await userRepository.updateUser(id, updateData);
+  if (!updated) throw new HttpError(404, "User not found");
+
+  const obj = (updated as any).toObject ? (updated as any).toObject() : updated;
+  delete obj.password;
+
+  return obj;
+}
+
 }
