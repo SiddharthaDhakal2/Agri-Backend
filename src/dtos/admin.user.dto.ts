@@ -6,6 +6,8 @@ export const AdminCreateUserDTO = z.object({
   email: z.string().email("Invalid email"),
   name: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  phone: z.string().optional(),
+  address: z.string().optional(),
   role: z.enum(["user", "admin"]).optional(),
   image: z.string().optional(),
 });
@@ -18,6 +20,8 @@ export const AdminUpdateUserDTO = z.object({
   email: z.string().email().optional(),
   name: z.string().min(3).optional(),
   password: z.string().min(6).optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
   role: z.enum(["user", "admin"]).optional(),
   image: z.string().optional(),
 });
