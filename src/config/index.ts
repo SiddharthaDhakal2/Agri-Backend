@@ -23,3 +23,10 @@ export const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || "7d";
 export const BCRYPT_SALT_ROUNDS: number = process.env.BCRYPT_SALT_ROUNDS
   ? parseInt(process.env.BCRYPT_SALT_ROUNDS, 10)
   : 10;
+
+export const KHALTI_SECRET_KEY: string = process.env.KHALTI_SECRET_KEY || "";
+export const KHALTI_RETURN_URL: string = process.env.KHALTI_RETURN_URL || "";
+export const KHALTI_WEBSITE_URL: string =
+  process.env.KHALTI_WEBSITE_URL ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:3000";
