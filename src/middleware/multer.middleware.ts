@@ -2,7 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 
-const uploadDir = path.join(process.cwd(), "uploads", "users");
+const uploadDir = path.join(__dirname, "..", "..", "uploads", "users");
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
@@ -23,5 +23,5 @@ const fileFilter: multer.Options["fileFilter"] = (_req, file, cb) => {
 export const uploadUserImage = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 },
+  limits: { fileSize: 20 * 1024 * 1024 },
 });
