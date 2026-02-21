@@ -14,11 +14,6 @@ export class UserService {
       throw new HttpError(409, "Email already in use");
     }
 
-    const usernameCheck = await userRepository.getUserByName(data.name);
-    if (usernameCheck) {
-      throw new HttpError(409, "Username already in use");
-    }
-
     const hashedPassword = await bcryptjs.hash(data.password, BCRYPT_SALT_ROUNDS);
     data.password = hashedPassword;
 
@@ -70,6 +65,13 @@ export class UserService {
   // Don’t allow role change from this endpoint unless admin
   if (!isAdmin) delete updateData.role;
 
+  if (updateData.email) {
+    const existingByEmail = await userRepository.getUserByEmail(updateData.email);
+    if (existingByEmail && existingByEmail._id.toString() !== id) {
+      throw new HttpError(409, "Email already in use");
+    }
+  }
+
   // If password present, hash it
   if (updateData.password) {
     updateData.password = await bcryptjs.hash(updateData.password, BCRYPT_SALT_ROUNDS);
@@ -83,5 +85,67 @@ export class UserService {
 
   return obj;
 }
+
+  async changePassword(requester: any, userId: string, currentPassword: string, newPassword: string) {
+    // User can only change their own password
+    if (requester.id !== userId) {
+      throw new HttpError(403, "You can only change your own password");
+    }
+
+    // Validate new password length
+    if (!newPassword || newPassword.length < 6) {
+      throw new HttpError(400, "New password must be at least 6 characters");
+    }
+
+    // Get user from database
+    const user = await userRepository.getUserById(userId);
+    if (!user) {
+      throw new HttpError(404, "User not found");
+    }
+
+    // Verify current password
+    const validPassword = await bcryptjs.compare(currentPassword, user.password);
+    if (!validPassword) {
+      throw new HttpError(400, "Current password is incorrect");
+    }
+
+    // Check that new password is different from current
+    const sameAsOld = await bcryptjs.compare(newPassword, user.password);
+    if (sameAsOld) {
+      throw new HttpError(400, "New password must be different from current password");
+    }
+
+    // Hash new password
+    const hashedPassword = await bcryptjs.hash(newPassword, BCRYPT_SALT_ROUNDS);
+
+    // Update password
+    const updated = await userRepository.updateUser(userId, { password: hashedPassword });
+    if (!updated) throw new HttpError(500, "Failed to update password");
+
+    return { success: true, message: "Password updated successfully" };
+  }
+
+  async findByEmail(email: string) {
+    const user = await userRepository.getUserByEmail(email);
+    return user;
+  }
+
+  async updateUser(userId: string, updateData: any) {
+    const updated = await userRepository.updateUser(userId, updateData);
+    if (!updated) throw new HttpError(404, "User not found");
+    return updated;
+  }
+
+  async updatePassword(userId: string, newPassword: string) {
+    if (!newPassword || newPassword.length < 6) {
+      throw new HttpError(400, "New password must be at least 6 characters");
+    }
+
+    const hashedPassword = await bcryptjs.hash(newPassword, BCRYPT_SALT_ROUNDS);
+    const updated = await userRepository.updateUser(userId, { password: hashedPassword });
+    if (!updated) throw new HttpError(500, "Failed to update password");
+
+    return { success: true, message: "Password reset successfully" };
+  }
 
 }
