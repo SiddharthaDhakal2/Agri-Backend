@@ -179,6 +179,36 @@ export class AuthController {
     }
   }
 
+  async deleteAccount(req: Request, res: Response) {
+    try {
+      const requester = (req as any).user;
+      const { currentPassword } = req.body;
+
+      if (!currentPassword || !currentPassword.toString().trim()) {
+        return res.status(400).json({
+          success: false,
+          message: "Current password is required",
+        });
+      }
+
+      const result = await userService.deleteOwnAccount(
+        requester,
+        req.params.id,
+        currentPassword
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+      });
+    } catch (error: any) {
+      return res.status(error.statusCode ?? 500).json({
+        success: false,
+        message: error.message || "Internal Server Error",
+      });
+    }
+  }
+
   async sendOtp(req: Request, res: Response) {
     try {
       const { email } = req.body;
