@@ -125,6 +125,38 @@ export class UserService {
     return { success: true, message: "Password updated successfully" };
   }
 
+  async deleteOwnAccount(
+    requester: any,
+    userId: string,
+    currentPassword: string
+  ) {
+    // User can only delete their own account.
+    if (requester.id !== userId) {
+      throw new HttpError(403, "You can only delete your own account");
+    }
+
+    if (!currentPassword || !currentPassword.trim()) {
+      throw new HttpError(400, "Current password is required");
+    }
+
+    const user = await userRepository.getUserById(userId);
+    if (!user) {
+      throw new HttpError(404, "User not found");
+    }
+
+    const validPassword = await bcryptjs.compare(currentPassword, user.password);
+    if (!validPassword) {
+      throw new HttpError(400, "Current password is incorrect");
+    }
+
+    const deleted = await userRepository.deleteUser(userId);
+    if (!deleted) {
+      throw new HttpError(500, "Failed to delete account");
+    }
+
+    return { success: true, message: "Account deleted successfully" };
+  }
+
   async findByEmail(email: string) {
     const user = await userRepository.getUserByEmail(email);
     return user;
