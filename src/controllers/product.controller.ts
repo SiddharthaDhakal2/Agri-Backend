@@ -7,6 +7,15 @@ const productService = new ProductService();
 export class ProductController {
   async createProduct(req: Request, res: Response) {
     try {
+      // Attach image path to req.body before validation
+      if (req.file) {
+        req.body.image = `/uploads/admin/${req.file.filename}`;
+      }
+
+      // Convert numeric fields from string to number (since multipart/form-data sends all as strings)
+      if (typeof req.body.price === 'string') req.body.price = Number(req.body.price);
+      if (typeof req.body.quantity === 'string') req.body.quantity = Number(req.body.quantity);
+
       const parsedData = CreateProductDTO.safeParse(req.body);
 
       if (!parsedData.success) {
@@ -17,7 +26,8 @@ export class ProductController {
         });
       }
 
-      const product = await productService.createProduct(parsedData.data);
+      const productData = parsedData.data;
+      const product = await productService.createProduct(productData);
 
       return res.status(201).json({
         success: true,
@@ -88,8 +98,12 @@ export class ProductController {
   async updateProduct(req: Request, res: Response) {
     try {
       const { id } = req.params;
+      let updateData = req.body;
+      if (req.file) {
+        updateData = { ...updateData, image: `/uploads/admin/${req.file.filename}` };
+      }
 
-      const product = await productService.updateProduct(id, req.body);
+      const product = await productService.updateProduct(id, updateData);
 
       return res.status(200).json({
         success: true,
