@@ -1,7 +1,9 @@
+import { OrderModel, IOrder } from "../models/order.model";
 import { CreateOrderDTO, UpdateOrderStatusDTO } from "../dtos/order.dto";
-import { HttpError } from "../errors/http-error";
-import { IOrder, OrderModel } from "../models/order.model";
 import { ProductModel } from "../models/product.model";
+import { HttpError } from "../errors/http-error";
+import { calculateProductAvailability } from "../utils/product-availability";
+
 
 interface CreateOrderOptions {
   paymentMethod?: "khalti" | "esewa";
@@ -43,15 +45,7 @@ export class OrderRepository {
       }
 
       const newQuantity = product.quantity - item.quantity;
-      let availability: "in-stock" | "low-stock" | "out-of-stock";
-
-      if (newQuantity === 0) {
-        availability = "out-of-stock";
-      } else if (newQuantity < 20) {
-        availability = "low-stock";
-      } else {
-        availability = "in-stock";
-      }
+      const availability = calculateProductAvailability(newQuantity);
 
       await ProductModel.findByIdAndUpdate(
         item.productId,
