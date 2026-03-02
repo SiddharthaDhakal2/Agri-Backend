@@ -20,9 +20,23 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // CORS Configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "http://localhost:3000",
+  "http://10.1.15.113:3000",
+];
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Mobile apps may not send Origin header
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
   })
 );
@@ -63,11 +77,15 @@ async function startServer() {
   try {
     await connectDatabase();
 
-    app.listen(PORT, () => {
-      console.log(`✅ Server running: http://localhost:${PORT}`);
+    const HOST = "0.0.0.0";
+
+    app.listen(Number(PORT), HOST, () => {
+      console.log(`Server running on: http://${HOST}:${PORT}`);
+      console.log(`From phone use: http://10.1.15.113:${PORT}`);
     });
+
   } catch (error) {
-    console.error("❌ Failed to start server:", error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 }
